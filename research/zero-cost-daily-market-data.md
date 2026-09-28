@@ -1,13 +1,15 @@
-# Zero-cost daily market-data providers for greentech
+# US zero-cost daily market-data research (secondary market only)
 
-**Research ticket:** [Compare zero-cost daily market data vendors](https://github.com/kchapl/greentech/issues/10)  
+> **Scope correction (2026-09-28):** This investigation covered US-listed equities only. The product's primary universe is now UK and European exchange listings; US listings are secondary. This document is retained as the US-secondary comparison and is not the provider recommendation for the primary UK/European market. See the open [UK/European provider comparison](https://github.com/kchapl/greentech/issues/21) and [regional exchange-scope decision](https://github.com/kchapl/greentech/issues/28).
+
+**Research ticket:** [Compare US zero-cost daily market-data vendors (secondary market)](https://github.com/kchapl/greentech/issues/10)
 **Map:** [greentech: spec for a mirror-and-forecast green-tech investing app](https://github.com/kchapl/greentech/issues/9)  
 **Accessed:** 2026-09-28  
-**Scope:** One person, US-listed equities, daily OHLCV, curated 20–50-name watchlist, zero recurring spend, eventual display in a single-user app, no brokerage orders.
+**Scope:** One person, US-listed equities as a secondary universe, daily OHLCV, curated 20–50-name watchlist, zero recurring spend, eventual display in a single-user app, no brokerage orders.
 
-## Finding
+## US-secondary finding only
 
-**Recommend piloting Alpaca Basic as the initial EOD bars source, behind a small server-side data adapter.** It is the strongest fit found for the settled zero-cost constraint: its official plan page states historical US stock data since 2016 and 200 historical API calls/minute. Its FAQ says historical SIP data can be queried when the request's `end` is at least 15 minutes old. Its multi-symbol historical-bars endpoint can fetch bars for a symbol list. For end-of-day requests, a single-symbol-at-a-time daily quota is not an obvious blocker.
+For a US-secondary pilot, **Alpaca Basic** was the strongest zero-spend candidate behind a small server-side data adapter. **This does not recommend Alpaca for the primary UK/European listings.** It is the strongest fit found for the settled zero-cost constraint: its official plan page states historical US stock data since 2016 and 200 historical API calls/minute. Its FAQ says historical SIP data can be queried when the request's `end` is at least 15 minutes old. Its multi-symbol historical-bars endpoint can fetch bars for a symbol list. For end-of-day requests, a single-symbol-at-a-time daily quota is not an obvious blocker.
 
 This is a **candidate pending a thin integration test**, not a guarantee that every desired symbol, price adjustment mode, account configuration, display use, or future API behavior is covered. Confirm the chosen feed and corporate-action adjustment semantics against actual responses before treating data as backtest-grade. Alpaca's free real-time feed is IEX-only (one venue); do not confuse it with consolidated SIP coverage.
 
@@ -17,7 +19,7 @@ The server-side adapter is recommended because Alpaca data calls require both an
 
 | Provider | Published free allowance / history | Material constraint for greentech | Assessment |
 |---|---|---|---|
-| **Alpaca Basic** | 200 historical calls/min; US stocks & ETFs; historical timeframe since 2016. Free real-time stock coverage is IEX. FAQ documents SIP historical queries when `end` is at least 15 minutes old. Historical bars endpoint accepts a list of symbols. | API requires key ID + secret headers. The docs distinguish free real-time IEX from delayed historical SIP; verify requested feed and actual daily-bar results with the account before relying on consolidated data. CORS not verified. | **Best pilot candidate**, via server-side adapter. Fits batch daily refresh and keeps credentials out of the browser. Zero spend requires accepting non-real-time prices. |
+| **Alpaca Basic** | 200 historical calls/min; US stocks & ETFs; historical timeframe since 2016. Free real-time stock coverage is IEX. FAQ documents SIP historical queries when `end` is at least 15 minutes old. Historical bars endpoint accepts a list of symbols. | API requires key ID + secret headers. The docs distinguish free real-time IEX from delayed historical SIP; verify requested feed and actual daily-bar results with the account before relying on consolidated data. CORS not verified. | **Best US-secondary pilot candidate**, via server-side adapter. Fits batch daily refresh and keeps credentials out of the browser. Zero spend requires accepting non-real-time prices. |
 | **Alpha Vantage** | Free stock API: 25 requests/day. Free `TIME_SERIES_DAILY` is limited to latest 100 points (`compact`); full history is premium. `TIME_SERIES_DAILY_ADJUSTED` is explicitly premium. | Latest 100 daily bars is roughly five trading months, insufficient for serious multi-year strategy evaluation. 20–50 symbols individually exceed or consume most of the daily quota. Adjusted daily history is not free. API key is sent as `apikey` parameter, so browser use exposes it. | **Not suitable** for backtest-ready daily history under the zero-spend constraint. |
 | **Twelve Data Basic** | Free Basic lists 8 API credits/minute and 800/day; usage weight is per symbol and endpoint. | Official pricing says Basic is for testing/evaluation/development, data may not be displayed to users or used in production. Thus it cannot power the intended displayed app on the free tier. API uses a credential; direct browser use exposes it. CORS not verified. | Useful for a spike, **not the production-data choice** at zero spend. |
 | **Financial Modeling Prep Basic** | Free plan: 250 calls/day, EOD historical data, published 5-year range. | Its current terms restrict the free personal-use license to an individual and prohibit integrating data into third-party-accessible tools/apps or displaying it on applications designed for multiple people without written approval. Not a safe assumption for a web app with an internet-accessible URL; usage/display rights need confirmation. API-key handling also favors a server-side adapter. | Potentially attractive for a private personal experiment; **do not select for a deployed app without clarifying display/licensing terms**. |
@@ -32,9 +34,9 @@ The server-side adapter is recommended because Alpaca data calls require both an
 - **No CORS claim is made here.** Official pages reviewed establish APIs and authentication, but not an explicit browser-CORS guarantee for these candidates. Even with CORS, secrets in browser code are exposed; the server-side adapter is the safer architecture.
 - **Provider selection does not settle backtest validity.** Survivorship bias, corporate actions, delistings, historical universe membership, realistic costs, and avoiding look-ahead are covered by the separate backtesting-validity ticket.
 
-## Pilot acceptance checks
+## US-secondary pilot acceptance checks
 
-Before adopting Alpaca as the data source, make a minimal, non-production test with a small set of representative watchlist symbols:
+Before adopting Alpaca for any US-secondary symbols, make a minimal, non-production test with a small set of representative watchlist symbols:
 
 1. Request multi-symbol `1Day` bars with an explicit historical feed and a time range ending more than 15 minutes ago; establish whether SIP is available under Basic for the signed-up account.
 2. Compare timestamps, missing sessions, OHLCV and volume against an independent trusted reference for several liquid and less-liquid names.
